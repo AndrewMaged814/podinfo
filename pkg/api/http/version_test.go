@@ -26,11 +26,13 @@ func TestVersionHandler(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	// Check the response body is what we expect.
-	expected := "unknown"
-	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expected))
-	if !r.MatchString(rr.Body.String()) {
-		t.Fatalf("handler returned unexpected body:\ngot \n%v \nwant \n%s",
-			rr.Body.String(), expected)
+	body := rr.Body.String()
+
+	for _, field := range []string{"unknown", "buildtime", "runtime"} {
+		r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", field))
+		if !r.MatchString(body) {
+			t.Fatalf("handler returned unexpected body:\ngot \n%v \nwant field %s",
+				body, field)
+		}
 	}
 }
