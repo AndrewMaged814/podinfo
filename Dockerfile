@@ -1,6 +1,7 @@
 FROM golang:1.26-alpine AS builder
 
 ARG REVISION
+ARG BUILD_DATE=unknown
 
 RUN mkdir -p /podinfo/
 
@@ -11,11 +12,13 @@ COPY . .
 RUN go mod download
 
 RUN CGO_ENABLED=0 go build -ldflags "-s -w \
-    -X github.com/stefanprodan/podinfo/pkg/version.REVISION=${REVISION}" \
+    -X github.com/stefanprodan/podinfo/pkg/version.REVISION=${REVISION} \
+    -X github.com/stefanprodan/podinfo/pkg/version.BUILDTIME=${BUILD_DATE}" \
     -a -o bin/podinfo cmd/podinfo/*
 
 RUN CGO_ENABLED=0 go build -ldflags "-s -w \
-    -X github.com/stefanprodan/podinfo/pkg/version.REVISION=${REVISION}" \
+    -X github.com/stefanprodan/podinfo/pkg/version.REVISION=${REVISION} \
+    -X github.com/stefanprodan/podinfo/pkg/version.BUILDTIME=${BUILD_DATE}" \
     -a -o bin/podcli cmd/podcli/*
 
 FROM alpine:3.24

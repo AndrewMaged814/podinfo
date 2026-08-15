@@ -7,11 +7,13 @@ NAME:=podinfo
 DOCKER_REPOSITORY:=stefanprodan
 DOCKER_IMAGE_NAME:=$(DOCKER_REPOSITORY)/$(NAME)
 GIT_COMMIT:=$(shell git describe --dirty --always)
+BUILD_DATE:=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)
 VERSION:=$(shell grep 'VERSION' pkg/version/version.go | awk '{ print $$4 }' | tr -d '"')
 EXTRA_RUN_ARGS?=
+LDFLAGS:=-s -w -X github.com/stefanprodan/podinfo/pkg/version.REVISION=$(GIT_COMMIT) -X github.com/stefanprodan/podinfo/pkg/version.BUILDTIME=$(BUILD_DATE)
 
 run:
-	go run -ldflags "-s -w -X github.com/stefanprodan/podinfo/pkg/version.REVISION=$(GIT_COMMIT)" cmd/podinfo/* \
+	go run -ldflags "$(LDFLAGS)" cmd/podinfo/* \
 	--level=debug --grpc-port=9999 --backend-url=https://httpbin.org/status/401 --backend-url=https://httpbin.org/status/500 \
 	--ui-logo=https://raw.githubusercontent.com/stefanprodan/podinfo/gh-pages/cuddle_clap.gif $(EXTRA_RUN_ARGS)
 
@@ -20,8 +22,8 @@ test: tidy fmt vet
 	go test ./... -coverprofile cover.out
 
 build:
-	GIT_COMMIT=$$(git rev-list -1 HEAD) && CGO_ENABLED=0 go build  -ldflags "-s -w -X github.com/stefanprodan/podinfo/pkg/version.REVISION=$(GIT_COMMIT)" -a -o ./bin/podinfo ./cmd/podinfo/*
-	GIT_COMMIT=$$(git rev-list -1 HEAD) && CGO_ENABLED=0 go build  -ldflags "-s -w -X github.com/stefanprodan/podinfo/pkg/version.REVISION=$(GIT_COMMIT)" -a -o ./bin/podcli ./cmd/podcli/*
+	GIT_COMMIT=$$(git rev-list -1 HEAD) && CGO_ENABLED=0 go build  -ldflags "-s -w -X github.com/stefanprodan/podinfo/pkg/version.REVISION=$$GIT_COMMIT -X github.com/stefanprodan/podinfo/pkg/version.BUILDTIME=$(BUILD_DATE)" -a -o ./bin/podinfo ./cmd/podinfo/*
+	GIT_COMMIT=$$(git rev-list -1 HEAD) && CGO_ENABLED=0 go build  -ldflags "-s -w -X github.com/stefanprodan/podinfo/pkg/version.REVISION=$$GIT_COMMIT -X github.com/stefanprodan/podinfo/pkg/version.BUILDTIME=$(BUILD_DATE)" -a -o ./bin/podcli ./cmd/podcli/*
 
 tidy:
 	rm -f go.sum; go mod tidy -compat=1.26
