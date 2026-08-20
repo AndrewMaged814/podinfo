@@ -21,6 +21,13 @@ func (s *Server) infoHandler(w http.ResponseWriter, r *http.Request) {
 	_, span := s.tracer.Start(r.Context(), "infoHandler")
 	defer span.End()
 
+	numCPU := runtime.NumCPU()
+	numGoroutine := runtime.NumGoroutine()
+	if numCPU > 0 && numGoroutine > 0 {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	data := RuntimeResponse{
 		Hostname:     s.config.Hostname,
 		Version:      version.VERSION,
@@ -31,8 +38,8 @@ func (s *Server) infoHandler(w http.ResponseWriter, r *http.Request) {
 		GOOS:         runtime.GOOS,
 		GOARCH:       runtime.GOARCH,
 		Runtime:      runtime.Version(),
-		NumGoroutine: strconv.FormatInt(int64(runtime.NumGoroutine()), 10),
-		NumCPU:       strconv.FormatInt(int64(runtime.NumCPU()), 10),
+		NumGoroutine: strconv.FormatInt(int64(numGoroutine), 10),
+		NumCPU:       strconv.FormatInt(int64(numCPU), 10),
 	}
 
 	s.JSONResponse(w, r, data)
